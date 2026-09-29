@@ -204,7 +204,11 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                         let listHTML = found.slice(0, 5).map(f => {
                             let safeName = encodeURIComponent(f);
                             let dispName = f.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                            return "<br>📄 <a href='?doc=" + safeName + "' target='_parent' onclick='window.parent.sessionStorage.setItem(\\"evoriChat\\", window.parent.document.getElementById(\\"chat-content\\").innerHTML); window.parent.sessionStorage.setItem(\\"evoriPosX\\", window.parent.evoriState.posX); window.parent.sessionStorage.setItem(\\"evoriFacing\\", window.parent.evoriState.facingRight);' style='color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;'>" + dispName + "</a>";
+                            
+                            // 🚀 NEW CLICK HANDLER: Safely modifies the URL for Streamlit Cloud and triggers a reload
+                            let onClickJS = `window.parent.sessionStorage.setItem('evoriChat', window.parent.document.getElementById('chat-content').innerHTML); window.parent.sessionStorage.setItem('evoriPosX', window.parent.evoriState.posX); window.parent.sessionStorage.setItem('evoriFacing', window.parent.evoriState.facingRight); const url = new URL(window.parent.location.href); url.searchParams.set('doc', '` + safeName + `'); window.parent.location.href = url.toString(); return false;`;
+                            
+                            return "<br>📄 <a href='#' onclick=\"" + onClickJS + "\" style='color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;'>" + dispName + "</a>";
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
@@ -257,8 +261,16 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     const dCat = parentDoc.createElement('div'); dCat.className = 'msg-cat'; dCat.innerHTML = reply; chatContent.appendChild(dCat);
                     chatContent.scrollTop = chatContent.scrollHeight;
                     
-                    const textOnlyReply = reply.replace(/<[^>]*>?/gm, ''); 
-                    parentWin.evoriActions.speak(null, textOnlyReply);
+                    // 🚀 NEW BUBBLE LOGIC: Shorten long responses so they don't cover the screen!
+                    let bubbleText = reply.replace(/<[^>]*>?/gm, ''); 
+                    if (bubbleText.length > 70) {
+                        if (reply.includes("href")) {
+                            bubbleText = "There you go! I put the links in the chat. ✨📚";
+                        } else {
+                            bubbleText = "I wrote a detailed response in the chat! 🐾";
+                        }
+                    }
+                    parentWin.evoriActions.speak(null, bubbleText);
                     
                     catContainer.style.bottom = '80px'; setTimeout(() => { catContainer.style.bottom = '20px'; }, 300);
                     window.parent.sessionStorage.setItem('evoriChat', chatContent.innerHTML);
