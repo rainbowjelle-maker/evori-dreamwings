@@ -156,11 +156,10 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
 
             // 🚀 FORTIFIED DEEP LINK ROUTER
             parentWin.evoriActions = {
-                openDoc: function(encodedDocName) {
+                prepRoute: function() {
                     try {
                         let chat = parentWin.document.getElementById('chat-content');
                         if(chat) {
-                            // Print a visual message in chat to confirm the click worked
                             let dSys = parentWin.document.createElement('div');
                             dSys.className = 'msg-cat';
                             dSys.innerHTML = '<i>Fetching document... 🚀</i>';
@@ -168,12 +167,8 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                             chat.scrollTop = chat.scrollHeight;
                             parentWin.sessionStorage.setItem('evoriChat', chat.innerHTML);
                         }
-                        
                         parentWin.sessionStorage.setItem('evoriPosX', parentWin.evoriState.posX);
                         parentWin.sessionStorage.setItem('evoriFacing', parentWin.evoriState.facingRight);
-                        const url = new URL(parentWin.location.href);
-                        url.searchParams.set('doc', decodeURIComponent(encodedDocName));
-                        parentWin.location.href = url.toString();
                     } catch(e) { console.error("Evori Routing Error: ", e); }
                 },
                 speak: function(mode, overrideText) {
@@ -224,12 +219,11 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
                             let fileNameOnly = f.split('/').pop();
-                            
                             let safeName = encodeURIComponent(fileNameOnly).replace(/'/g, "%27");
                             let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // 🚀 THE FIX: Removed window.parent which was triggering security blocks!
-                            return `<br>📄 <a href="#" onclick="window.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
+                            // 🚀 THE FIX: Javascript routing removed! We use pure native HTML routing with target="_self" to safely bypass Streamlit's sandbox.
+                            return `<br>📄 <a href="?doc=${safeName}" target="_self" onclick="window.evoriActions.prepRoute();" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
