@@ -214,11 +214,14 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            let safeName = encodeURIComponent(f).replace(/'/g, "%27");
-                            let dispName = f.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                            // 🚀 THE FIX: Strip out all folder names! Now it only links "The Post Office Scandal Chronology.pdf"
+                            let fileNameOnly = f.split('/').pop().split('\\').pop();
                             
-                            // 🚀 THE FIX: We use backticks to construct the HTML cleanly without breaking Python
-                            return `<br>📄 <a href="#" onclick="window.parent.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
+                            let safeName = encodeURIComponent(fileNameOnly).replace(/'/g, "%27");
+                            let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                            
+                            // Added target="_top" so Streamlit recognizes the browser click properly!
+                            return `<br>📄 <a href="?doc=${safeName}" target="_top" onclick="window.parent.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
