@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
@@ -85,7 +86,6 @@ st.sidebar.markdown("---")
 st.sidebar.title("Toolbox Navigation")
 st.sidebar.markdown("---")
 
-# 🚀 THE FIX IS RIGHT HERE: Added key="cat_equipped"
 cat_equipped = st.sidebar.toggle("🐱 Equip Evori Familiar", value=True, key="cat_equipped")
 st.sidebar.markdown("---")
 
