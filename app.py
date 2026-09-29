@@ -189,9 +189,23 @@ if category == "Theories Library":
                 with col1: st.markdown("### 📄 PDF Document")
                 with col2: st.download_button(label="📥 Download File", data=pdf_bytes, file_name=selected_theory, mime='application/pdf', use_container_width=True)
                 
+                # BLOB WORKAROUND: Bypasses Chrome/Safari security blocks
                 base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf">'
-                st.markdown(pdf_display, unsafe_allow_html=True)
+                pdf_html = f"""
+                <script>
+                    var pdfData = "{base64_pdf}";
+                    var byteCharacters = atob(pdfData);
+                    var byteNumbers = new Array(byteCharacters.length);
+                    for (var i = 0; i < byteCharacters.length; i++) {{
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }}
+                    var byteArray = new Uint8Array(byteNumbers);
+                    var blob = new Blob([byteArray], {{ type: 'application/pdf' }});
+                    var url = URL.createObjectURL(blob);
+                    document.write('<iframe src="' + url + '" width="100%" height="800px" style="border:none;"></iframe>');
+                </script>
+                """
+                st.components.v1.html(pdf_html, height=800)
                 
                 st.markdown("---")
                 st.markdown("#### 📝 Raw Text Preview")
