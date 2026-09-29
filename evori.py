@@ -154,7 +154,7 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
             }
             updateAccessory("{CAT_MODE}");
 
-            // 🚀 FORTIFIED DEEP LINK ROUTER (IMMUNE TO APOSTROPHES/QUOTES IN FILE NAMES)
+            // 🚀 FORTIFIED DEEP LINK ROUTER
             parentWin.evoriActions = {
                 openDoc: function(encodedDocName) {
                     try {
@@ -214,12 +214,11 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            // Safely encodes names so quotes and symbols don't break the code
                             let safeName = encodeURIComponent(f).replace(/'/g, "%27");
                             let dispName = f.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // 🚀 Uses the fortified Router function!
-                            return "<br>📄 <a href='#' onclick=\"window.parent.evoriActions.openDoc('" + safeName + "'); return false;\" style='color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;'>" + dispName + "</a>";
+                            // 🚀 THE FIX: We use backticks to construct the HTML cleanly without breaking Python
+                            return `<br>📄 <a href="#" onclick="window.parent.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
