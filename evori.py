@@ -159,7 +159,16 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                 openDoc: function(encodedDocName) {
                     try {
                         let chat = parentWin.document.getElementById('chat-content');
-                        if(chat) parentWin.sessionStorage.setItem('evoriChat', chat.innerHTML);
+                        if(chat) {
+                            // Print a visual message in chat to confirm the click worked
+                            let dSys = parentWin.document.createElement('div');
+                            dSys.className = 'msg-cat';
+                            dSys.innerHTML = '<i>Fetching document... 🚀</i>';
+                            chat.appendChild(dSys);
+                            chat.scrollTop = chat.scrollHeight;
+                            parentWin.sessionStorage.setItem('evoriChat', chat.innerHTML);
+                        }
+                        
                         parentWin.sessionStorage.setItem('evoriPosX', parentWin.evoriState.posX);
                         parentWin.sessionStorage.setItem('evoriFacing', parentWin.evoriState.facingRight);
                         const url = new URL(parentWin.location.href);
@@ -214,13 +223,13 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            // 🚀 THE FIX: Stripped the risky backslashes. It now perfectly extracts just the filename!
                             let fileNameOnly = f.split('/').pop();
                             
                             let safeName = encodeURIComponent(fileNameOnly).replace(/'/g, "%27");
                             let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            return `<br>📄 <a href="?doc=${safeName}" target="_top" onclick="window.parent.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
+                            // 🚀 THE FIX: Removed window.parent which was triggering security blocks!
+                            return `<br>📄 <a href="#" onclick="window.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
