@@ -154,9 +154,9 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
             }
             updateAccessory("{CAT_MODE}");
 
-            // 🚀 FORTIFIED DEEP LINK ROUTER
+            // 🚀 THE ULTIMATE REACT BYPASS ROUTER
             parentWin.evoriActions = {
-                prepRoute: function() {
+                openDoc: function(encodedDocName) {
                     try {
                         let chat = parentWin.document.getElementById('chat-content');
                         if(chat) {
@@ -169,6 +169,11 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                         }
                         parentWin.sessionStorage.setItem('evoriPosX', parentWin.evoriState.posX);
                         parentWin.sessionStorage.setItem('evoriFacing', parentWin.evoriState.facingRight);
+                        
+                        // Defeats React Router by forcefully re-assigning the window path!
+                        let targetUrl = new URL(parentWin.location.href);
+                        targetUrl.searchParams.set('doc', decodeURIComponent(encodedDocName));
+                        parentWin.location.assign(targetUrl.toString());
                     } catch(e) { console.error("Evori Routing Error: ", e); }
                 },
                 speak: function(mode, overrideText) {
@@ -218,14 +223,12 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            // 🚀 THE FIX: Pass the FULL path (f) to the URL so app.py can match it, 
-                            // but only show the clean short filename (fileNameOnly) in the chat box!
                             let safeName = encodeURIComponent(f).replace(/'/g, "%27");
                             let fileNameOnly = f.split('/').pop();
                             let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // 🚀 target="_parent" perfectly forces Streamlit to read the URL and refresh the viewer!
-                            return `<br>📄 <a href="?doc=${safeName}" target="_parent" onclick="window.evoriActions.prepRoute();" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
+                            // 🚀 THE FIX: Dummy link (href="#"). When clicked, our new JS completely overrides the browser and forces a reload!
+                            return `<br>📄 <a href="#" onclick="window.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
