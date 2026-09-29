@@ -160,11 +160,15 @@ if category == "Theories Library":
     if global_valid_files:
         sorted_files = sorted(global_valid_files, key=str.casefold)
         
-        # If Evori clicked a link, pre-select that document
+       # 1. Catch the exact link Evori clicked in the web address
+        target_doc = st.query_params.get("doc", None)
+        
+        # 2. Mathematically find that file in your library
         doc_idx = 0
         if target_doc and target_doc in sorted_files:
             doc_idx = sorted_files.index(target_doc)
-        
+            
+        # 3. Force the dropdown to select it automatically
         selected_theory = st.selectbox("🔍 Search and Select a Document (A-Z):", sorted_files, index=doc_idx)
         
         # Keep URL matching the currently selected document
