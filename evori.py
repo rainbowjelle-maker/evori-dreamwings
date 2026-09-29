@@ -176,22 +176,26 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
             // 🧠 PROGRAMMABLE PERSONALITY ENGINE
             // You can easily change what she says here!
             // ==========================================
-            function getKittyResponse(msg) {
+           function getKittyResponse(msg) {
                 let lowerMsg = msg.toLowerCase();
                 
-                // 1. SMART LIBRARY FUZZY SEARCH
-                if(lowerMsg.includes("search") || lowerMsg.includes("find") || lowerMsg.includes("look") || lowerMsg.includes("document") || lowerMsg.includes("library")) {
+                // 1. SMART LIBRARY FLEXIBLE SEARCH
+                if(lowerMsg.includes("search") || lowerMsg.includes("find") || lowerMsg.includes("look") || lowerMsg.includes("document") || lowerMsg.includes("library") || lowerMsg.includes("want") || lowerMsg.includes("need")) {
                     if(libraryFiles.length === 0) return "My library is empty! Upload a .zip file in the sidebar first! 🐾";
                     
                     let cleanMsg = lowerMsg.replace(/[?.,!]/g, '');
-                    let words = cleanMsg.split(' ').filter(w => !["search","find","look","up","for","document","documents","in","the","library","a","any","about","can","you","some","show","me"].includes(w) && w.trim() !== "");
+                    
+                    // A massive list of conversational words for Evori to ignore
+                    const stopWords = ["i", "want", "need", "give", "show", "me", "a", "an", "the", "some", "any", "all", "list", "of", "search", "find", "look", "up", "for", "document", "documents", "file", "files", "in", "library", "about", "topic", "containing", "contain", "can", "you", "please", "evori", "get"];
+                    
+                    let words = cleanMsg.split(' ').filter(w => !stopWords.includes(w) && w.trim() !== "");
                     
                     if(words.length === 0) return "What specific topic or filename should I sniff out? 🐾";
                     
-                    // Fuzzy Search: Checks if ALL words are somewhere in the filename, ignoring dashes and underscores
+                    // Flexible Search: If ANY of the core keywords match the filename, it's a hit!
                     let found = libraryFiles.filter(f => {
                         let safeFileName = f.toLowerCase().replace(/[_-]/g, ' ');
-                        return words.every(w => safeFileName.includes(w));
+                        return words.some(w => safeFileName.includes(w));
                     });
                     
                     if(found.length > 0) {
@@ -208,6 +212,36 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                         return "I dug through the files but didn't find anything matching '" + words.join(" ") + "'. 😿";
                     }
                 }
+                
+                // 2. RULES ENGINE (Triggers -> Response)
+                const rules = [
+                    { triggers: ["hello", "hi", "hey", "greetings"], response: "Meow! Welcome back to the dashboard! ✨🐾" },
+                    { triggers: ["how are you", "doing", "what's up"], response: "*purrrr* I'm doing great! Just keeping an eye on your data! 🐱💖" },
+                    { triggers: ["kamikaze", "attack", "fly"], response: "Did someone say KAMIKAZE?! 🚀💥" },
+                    { triggers: ["love you", "cute", "adorable"], response: "Aww, *happy purrs* You're the best! 💖✨" },
+                    { triggers: ["money", "finance", "budget"], response: "I only accept payment in catnip and tuna! 🐟💰" },
+                    { triggers: ["strategy", "plan", "smart"], response: "My strategy is to nap 18 hours a day. Highly effective! 🧐💤" },
+                    { triggers: ["who are you", "name"], response: "I am Evori Dreamwings! Your magical AI familiar! ✨" },
+                    { triggers: ["tired", "stressed", "hard", "giving up"], response: "Take a deep breath! You are brilliant, and you've totally got this! 💖✨" },
+                    { triggers: ["procrastinating", "lazy", "distracted"], response: "Focus! 😾 We have an empire to build! Get back to the dashboard!" }
+                ];
+
+                for (let rule of rules) {
+                    if (rule.triggers.some(trigger => lowerMsg.includes(trigger))) {
+                        return rule.response;
+                    }
+                }
+
+                // 3. MAGIC 8-BALL LOGIC
+                if(lowerMsg.endsWith("?")) { 
+                    const answers = ["Hmm... meow! The data says Yes! ✨", "No way! 😾", "Let me consult the stars... ✨ yes!", "I wouldn't bet my tuna on it. 🐟"]; 
+                    return answers[Math.floor(Math.random() * answers.length)]; 
+                }
+                
+                // 4. FALLBACK RANDOM RESPONSES
+                const randoms = ["Meow! 🐾", "*purrrrrr* 💖", "I'm just a magical cat! ✨", "Feed me more data! 🐟📊", "Is it time for a nap yet? 💤", "Wow, look at all these charts! 📈"];
+                return randoms[Math.floor(Math.random() * randoms.length)];
+            }
                 
                 // 2. RULES ENGINE (Triggers -> Response)
                 // Add your own custom triggers and rules below!
