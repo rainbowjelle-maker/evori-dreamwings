@@ -214,13 +214,12 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            // 🚀 THE FIX: Strip out all folder names! Now it only links "The Post Office Scandal Chronology.pdf"
-                            let fileNameOnly = f.split('/').pop().split('\\').pop();
+                            // 🚀 THE FIX: Stripped the risky backslashes. It now perfectly extracts just the filename!
+                            let fileNameOnly = f.split('/').pop();
                             
                             let safeName = encodeURIComponent(fileNameOnly).replace(/'/g, "%27");
                             let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // Added target="_top" so Streamlit recognizes the browser click properly!
                             return `<br>📄 <a href="?doc=${safeName}" target="_top" onclick="window.parent.evoriActions.openDoc('${safeName}'); return false;" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
@@ -274,7 +273,6 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     const dCat = parentDoc.createElement('div'); dCat.className = 'msg-cat'; dCat.innerHTML = reply; chatContent.appendChild(dCat);
                     chatContent.scrollTop = chatContent.scrollHeight;
                     
-                    // 🚀 70 CHARACTER BUBBLE CAP LOGIC
                     let bubbleText = reply.replace(/<[^>]*>?/gm, ''); 
                     if (bubbleText.length > 70) {
                         if (reply.includes("href")) {
