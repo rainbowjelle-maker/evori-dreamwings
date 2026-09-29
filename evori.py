@@ -176,7 +176,7 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
             // 🧠 PROGRAMMABLE PERSONALITY ENGINE
             // You can easily change what she says here!
             // ==========================================
-           function getKittyResponse(msg) {
+          function getKittyResponse(msg) {
                 let lowerMsg = msg.toLowerCase();
                 
                 // 1. SMART LIBRARY FLEXIBLE SEARCH
