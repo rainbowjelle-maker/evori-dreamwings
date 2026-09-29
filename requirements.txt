@@ -1,0 +1,13 @@
+streamlit
+plotly
+pandas
+graphviz
+google-generativeai
+Pillow
+fpdf
+python-pptx
+PyPDF2
+python-docx
+requests
+beautifulsoup4
+openpyxl
