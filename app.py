@@ -85,7 +85,8 @@ st.sidebar.markdown("---")
 st.sidebar.title("Toolbox Navigation")
 st.sidebar.markdown("---")
 
-cat_equipped = st.sidebar.toggle("🐱 Equip Evori Familiar", value=True)
+# 🚀 THE FIX IS RIGHT HERE: Added key="cat_equipped"
+cat_equipped = st.sidebar.toggle("🐱 Equip Evori Familiar", value=True, key="cat_equipped")
 st.sidebar.markdown("---")
 
 if "api_key" not in st.session_state: st.session_state.api_key = ""
