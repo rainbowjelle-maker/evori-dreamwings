@@ -9,6 +9,7 @@ from PIL import Image
 import os
 import zipfile
 import base64
+from streamlit_pdf_viewer import pdf_viewer
 
 # Import from our custom files
 from utils import (
@@ -189,23 +190,8 @@ if category == "Theories Library":
                 with col1: st.markdown("### 📄 PDF Document")
                 with col2: st.download_button(label="📥 Download File", data=pdf_bytes, file_name=selected_theory, mime='application/pdf', use_container_width=True)
                 
-                # BLOB WORKAROUND: Bypasses Chrome/Safari security blocks
-                base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                pdf_html = f"""
-                <script>
-                    var pdfData = "{base64_pdf}";
-                    var byteCharacters = atob(pdfData);
-                    var byteNumbers = new Array(byteCharacters.length);
-                    for (var i = 0; i < byteCharacters.length; i++) {{
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
-                    }}
-                    var byteArray = new Uint8Array(byteNumbers);
-                    var blob = new Blob([byteArray], {{ type: 'application/pdf' }});
-                    var url = URL.createObjectURL(blob);
-                    document.write('<iframe src="' + url + '" width="100%" height="800px" style="border:none;"></iframe>');
-                </script>
-                """
-                st.components.v1.html(pdf_html, height=800)
+                # Custom Streamlit PDF Viewer (Bypasses Chrome Security)
+                pdf_viewer(file_path)
                 
                 st.markdown("---")
                 st.markdown("#### 📝 Raw Text Preview")
