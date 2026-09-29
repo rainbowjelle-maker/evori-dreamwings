@@ -181,7 +181,7 @@ if category == "Theories Library":
                 try: st.image(Image.open(file_path), caption=selected_theory, use_container_width=True)
                 except Exception as e: st.error(f"Image error: {e}")
             
-          if selected_theory.lower().endswith('.txt'):
+                if selected_theory.lower().endswith('.txt'):
                 with open(file_path, "r", encoding="utf-8") as f:
                     st.text_area("Document Content", f.read(), height=600)
                     
