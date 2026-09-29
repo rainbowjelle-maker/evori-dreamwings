@@ -154,12 +154,24 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
             }
             updateAccessory("{CAT_MODE}");
 
+            // 🚀 FORTIFIED DEEP LINK ROUTER (IMMUNE TO APOSTROPHES/QUOTES IN FILE NAMES)
             parentWin.evoriActions = {
+                openDoc: function(encodedDocName) {
+                    try {
+                        let chat = parentWin.document.getElementById('chat-content');
+                        if(chat) parentWin.sessionStorage.setItem('evoriChat', chat.innerHTML);
+                        parentWin.sessionStorage.setItem('evoriPosX', parentWin.evoriState.posX);
+                        parentWin.sessionStorage.setItem('evoriFacing', parentWin.evoriState.facingRight);
+                        const url = new URL(parentWin.location.href);
+                        url.searchParams.set('doc', decodeURIComponent(encodedDocName));
+                        parentWin.location.href = url.toString();
+                    } catch(e) { console.error("Evori Routing Error: ", e); }
+                },
                 speak: function(mode, overrideText) {
                     clearTimeout(parentWin.evoriState.bubbleTimeout);
                     bubble.innerHTML = overrideText || "Meow!";
                     bubble.style.opacity = 1;
-                    parentWin.evoriState.bubbleTimeout = setTimeout(() => { bubble.style.opacity = 0; }, 3500);
+                    parentWin.evoriState.bubbleTimeout = setTimeout(() => { bubble.style.opacity = 0; }, 4000);
                 },
                 createParticle: function(emoji) {
                     const p = parentDoc.createElement('div'); p.className = 'particle'; p.innerHTML = emoji;
@@ -202,13 +214,12 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
-                            let safeName = encodeURIComponent(f);
+                            // Safely encodes names so quotes and symbols don't break the code
+                            let safeName = encodeURIComponent(f).replace(/'/g, "%27");
                             let dispName = f.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // 🚀 NEW CLICK HANDLER: Safely modifies the URL for Streamlit Cloud and triggers a reload
-                            let onClickJS = `window.parent.sessionStorage.setItem('evoriChat', window.parent.document.getElementById('chat-content').innerHTML); window.parent.sessionStorage.setItem('evoriPosX', window.parent.evoriState.posX); window.parent.sessionStorage.setItem('evoriFacing', window.parent.evoriState.facingRight); const url = new URL(window.parent.location.href); url.searchParams.set('doc', '` + safeName + `'); window.parent.location.href = url.toString(); return false;`;
-                            
-                            return "<br>📄 <a href='#' onclick=\"" + onClickJS + "\" style='color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;'>" + dispName + "</a>";
+                            // 🚀 Uses the fortified Router function!
+                            return "<br>📄 <a href='#' onclick=\"window.parent.evoriActions.openDoc('" + safeName + "'); return false;\" style='color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;'>" + dispName + "</a>";
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
@@ -261,7 +272,7 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     const dCat = parentDoc.createElement('div'); dCat.className = 'msg-cat'; dCat.innerHTML = reply; chatContent.appendChild(dCat);
                     chatContent.scrollTop = chatContent.scrollHeight;
                     
-                    // 🚀 NEW BUBBLE LOGIC: Shorten long responses so they don't cover the screen!
+                    // 🚀 70 CHARACTER BUBBLE CAP LOGIC
                     let bubbleText = reply.replace(/<[^>]*>?/gm, ''); 
                     if (bubbleText.length > 70) {
                         if (reply.includes("href")) {
@@ -270,6 +281,7 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                             bubbleText = "I wrote a detailed response in the chat! 🐾";
                         }
                     }
+                    
                     parentWin.evoriActions.speak(null, bubbleText);
                     
                     catContainer.style.bottom = '80px'; setTimeout(() => { catContainer.style.bottom = '20px'; }, 300);
