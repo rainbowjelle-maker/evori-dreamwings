@@ -56,6 +56,22 @@ if os.path.exists(KB_DIR):
                 global_valid_files.append(os.path.relpath(os.path.join(root, f), KB_DIR))
 
 # ==========================================
+# STATE MEMORY & REFERENCE TRACKER
+# ==========================================
+if "ai_report" not in st.session_state: st.session_state.ai_report = ""
+if "task_input" not in st.session_state: st.session_state.task_input = ""
+if "audience" not in st.session_state: st.session_state.audience = "University Thesis"
+if "competitor_url" not in st.session_state: st.session_state.competitor_url = ""
+if "qa_history" not in st.session_state: st.session_state.qa_history = []
+if "references" not in st.session_state: st.session_state.references = []
+
+def log_reference(item_name, action):
+    """Adds a beautiful entry to the session reference tracker."""
+    entry = f"📝 **{item_name}** - *{action}*"
+    if entry not in st.session_state.references:
+        st.session_state.references.append(entry)
+
+# ==========================================
 # UI SIDEBAR
 # ==========================================
 st.sidebar.title("🎨 Appearance")
@@ -128,6 +144,17 @@ if db:
             st.session_state.task_input = selected_project; st.session_state.ai_report = db[selected_project]; st.session_state.qa_history = []
             st.toast(f"Loaded '{selected_project}'!", icon="📂"); st.rerun()
 
+st.sidebar.markdown("---")
+st.sidebar.title("📌 Session References")
+if not st.session_state.references:
+    st.sidebar.caption("No references tracked yet. Read a file or run an analysis to start building your bibliography!")
+else:
+    for ref in st.session_state.references:
+        st.sidebar.markdown(ref)
+    if st.sidebar.button("Clear Tracker"):
+        st.session_state.references = []
+        st.rerun()
+
 # ==========================================
 # CAT INJECTION & THEMING
 # ==========================================
@@ -141,15 +168,6 @@ elif framework == "Theories Viewer": current_cat_mode = "Examiner"
 apply_theme_and_cat(app_theme, current_cat_mode, cat_equipped, global_valid_files)
 
 # ==========================================
-# STATE MEMORY
-# ==========================================
-if "ai_report" not in st.session_state: st.session_state.ai_report = ""
-if "task_input" not in st.session_state: st.session_state.task_input = ""
-if "audience" not in st.session_state: st.session_state.audience = "University Thesis"
-if "competitor_url" not in st.session_state: st.session_state.competitor_url = ""
-if "qa_history" not in st.session_state: st.session_state.qa_history = []
-
-# ==========================================
 # VIEWER
 # ==========================================
 if category == "Theories Library":
@@ -160,7 +178,7 @@ if category == "Theories Library":
     if global_valid_files:
         sorted_files = sorted(global_valid_files, key=str.casefold)
         
-       # 1. Catch the exact link Evori clicked in the web address
+        # 1. Catch the exact link Evori clicked in the web address
         target_doc = st.query_params.get("doc", None)
         
         # 2. Mathematically find that file in your library
@@ -181,6 +199,9 @@ if category == "Theories Library":
         if selected_theory:
             file_path = os.path.join(KB_DIR, selected_theory)
             st.markdown(f"### 📄 `{selected_theory}`")
+            
+            # Autolog to Reference Tracker
+            log_reference(selected_theory.split('/')[-1], "Viewed in Library")
             
             if selected_theory.lower().endswith(('.png', '.jpg', '.jpeg')):
                 try: st.image(Image.open(file_path), caption=selected_theory, use_container_width=True)
@@ -221,7 +242,7 @@ if category == "Theories Library":
                     st.error(f"Error reading Excel file: {e}")
 
             elif selected_theory.lower().endswith(('.ppt', '.pptx')):
-                st.warning("⚠️ **Browser Limitation:** Web browsers physically cannot render the visual graphics of a PowerPoint file. To see the actual visual slides, **Save As -> PDF** in PowerPoint and upload that PDF here!")
+                st.warning("⚠️️ **Browser Limitation:** Web browsers physically cannot render the visual graphics of a PowerPoint file. To see the actual visual slides, **Save As -> PDF** in PowerPoint and upload that PDF here!")
                 slides = read_pptx_slides(file_path)
                 if slides:
                     st.markdown("### 📝 Text-Only Slide Extraction")
@@ -295,12 +316,18 @@ else:
                     scraped = scrape_url(st.session_state.competitor_url)
                     if not scraped.startswith("[Error"): ai_input.append(f"\n\nCompetitor Data:\n{scraped}")
                 if uploaded_file is not None:
+                    # Log the custom session file immediately
+                    log_reference(uploaded_file.name, "Uploaded Session Reference")
                     if uploaded_file.name.lower().endswith(('.png', '.jpg', '.jpeg')): ai_input.append(Image.open(uploaded_file))
                     else: ai_input.append(f"\n\nSession Doc:\n{extract_text_from_file(uploaded_file.name)}")
 
                 final_response = model.generate_content(ai_input)
                 st.session_state.ai_report = final_response.text
                 st.session_state.qa_history = [] 
+                
+                # Log the AI Analysis completion!
+                log_reference(f"AI Report: {raw_topic}", "Generated")
+                
             st.toast("Analysis Complete!", icon="🚀")
             if st.session_state.cat_equipped: 
                 components.html("<script>if(window.parent.evoriActions) window.parent.evoriActions.speak('Action', 'Analysis Complete! ✨');</script>", height=0)
