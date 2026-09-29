@@ -185,7 +185,7 @@ if selected_theory.lower().endswith('.txt'):
                 with open(file_path, "r", encoding="utf-8") as f:
                     st.text_area("Document Content", f.read(), height=600)
                     
-            elif selected_theory.lower().endswith('.pdf'):
+elif selected_theory.lower().endswith('.pdf'):
                 with open(file_path, "rb") as f:
                     pdf_bytes = f.read()
                 
