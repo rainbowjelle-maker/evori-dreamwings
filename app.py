@@ -299,7 +299,8 @@ else:
         if not st.session_state.task_input: st.error("⚠️ Please enter a project topic and click 'Submit Prompt'!"); return
         try:
             genai.configure(api_key=st.session_state.api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            # Updated to use gemini-2.5-flash
+            model = genai.GenerativeModel('gemini-2.5-flash')
             with st.spinner(f"🤠 Prompt Cowboy is analyzing..."):
                 st.session_state.ai_script = "" # Reset script when new analysis starts
                 tone_guide = {
@@ -449,7 +450,8 @@ else:
                     with st.spinner("Drafting presentation script..."):
                         try:
                             genai.configure(api_key=st.session_state.api_key)
-                            script_model = genai.GenerativeModel('gemini-1.5-flash')
+                            # Updated to use gemini-2.5-flash
+                            script_model = genai.GenerativeModel('gemini-2.5-flash')
                             script_prompt = f"Act as an expert public speaking coach. Write a compelling, natural-sounding spoken presentation script based on the following report. Include bracketed stage directions like [Point to the graph] or [Pause for emphasis] where appropriate. Adapt the tone for a {st.session_state.audience}. Here is the report:\n\n{st.session_state.ai_report}"
                             st.session_state.ai_script = script_model.generate_content([script_prompt]).text
                             log_reference(f"Presentation Script: {st.session_state.task_input}", "Generated")
@@ -471,7 +473,8 @@ else:
                 with st.spinner("Formulating response..."):
                     try:
                         genai.configure(api_key=st.session_state.api_key)
-                        qa_model = genai.GenerativeModel('gemini-1.5-flash')
+                        # Updated to use gemini-2.5-flash
+                        qa_model = genai.GenerativeModel('gemini-2.5-flash')
                         defense_prompt = f"Act as a skeptical {st.session_state.audience}. Report: {st.session_state.ai_report}. User asks: '{qa_input}'. Challenge their logic."
                         st.session_state.qa_history.append({"role": "ai", "text": qa_model.generate_content([defense_prompt]).text})
                         st.rerun() 
