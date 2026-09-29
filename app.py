@@ -59,6 +59,7 @@ if os.path.exists(KB_DIR):
 # STATE MEMORY & REFERENCE TRACKER
 # ==========================================
 if "ai_report" not in st.session_state: st.session_state.ai_report = ""
+if "ai_script" not in st.session_state: st.session_state.ai_script = ""
 if "task_input" not in st.session_state: st.session_state.task_input = ""
 if "audience" not in st.session_state: st.session_state.audience = "University Thesis"
 if "competitor_url" not in st.session_state: st.session_state.competitor_url = ""
@@ -142,6 +143,7 @@ if db:
     if st.sidebar.button("Load Project"):
         if selected_project != "-- Select --":
             st.session_state.task_input = selected_project; st.session_state.ai_report = db[selected_project]; st.session_state.qa_history = []
+            st.session_state.ai_script = ""  # Reset script on load
             st.toast(f"Loaded '{selected_project}'!", icon="📂"); st.rerun()
 
 st.sidebar.markdown("---")
@@ -178,18 +180,15 @@ if category == "Theories Library":
     if global_valid_files:
         sorted_files = sorted(global_valid_files, key=str.casefold)
         
-        # 1. Catch the exact link Evori clicked in the web address
+        # Catch the exact link Evori clicked
         target_doc = st.query_params.get("doc", None)
         
-        # 2. Mathematically find that file in your library
         doc_idx = 0
         if target_doc and target_doc in sorted_files:
             doc_idx = sorted_files.index(target_doc)
             
-        # 3. Force the dropdown to select it automatically
         selected_theory = st.selectbox("🔍 Search and Select a Document (A-Z):", sorted_files, index=doc_idx)
         
-        # Keep URL matching the currently selected document
         try:
             if selected_theory:
                 st.query_params["doc"] = selected_theory
@@ -215,7 +214,6 @@ if category == "Theories Library":
                 with col1: st.markdown("### 📄 PDF Document")
                 with col2: st.download_button(label="📥 Download File", data=pdf_bytes, file_name=selected_theory, mime='application/pdf', use_container_width=True)
                 
-                # Custom Streamlit PDF Viewer (Bypasses Chrome Security)
                 pdf_viewer(file_path)
                 
                 st.markdown("---")
@@ -242,7 +240,7 @@ if category == "Theories Library":
                     st.error(f"Error reading Excel file: {e}")
 
             elif selected_theory.lower().endswith(('.ppt', '.pptx')):
-                st.warning("⚠️️ **Browser Limitation:** Web browsers physically cannot render the visual graphics of a PowerPoint file. To see the actual visual slides, **Save As -> PDF** in PowerPoint and upload that PDF here!")
+                st.warning("⚠ **Browser Limitation:** Web browsers physically cannot render the visual graphics of a PowerPoint file. To see the actual visual slides, **Save As -> PDF** in PowerPoint and upload that PDF here!")
                 slides = read_pptx_slides(file_path)
                 if slides:
                     st.markdown("### 📝 Text-Only Slide Extraction")
@@ -279,11 +277,13 @@ else:
     with col_btn1:
         if st.button("Submit Prompt", use_container_width=True):
             st.session_state.task_input = temp_task; st.session_state.audience = temp_audience; st.session_state.competitor_url = temp_url; st.session_state.qa_history = [] 
+            st.session_state.ai_script = "" # Clear old script
             st.toast("Prompt locked!", icon="🎯")
             if st.session_state.cat_equipped: components.html("<script>if(window.parent.evoriActions) window.parent.evoriActions.speak('Action', 'Prompt saved! 👍');</script>", height=0)
     with col_btn2:
         if st.button("Submit & Save Project", use_container_width=True):
             st.session_state.task_input = temp_task; st.session_state.audience = temp_audience; st.session_state.competitor_url = temp_url; st.session_state.qa_history = []
+            st.session_state.ai_script = "" # Clear old script
             save_to_database(temp_task, st.session_state.ai_report)
             st.toast("Prompt saved to Library!", icon="💾")
             if st.session_state.cat_equipped: components.html("<script>if(window.parent.evoriActions) window.parent.evoriActions.speak('Action', 'Saved to disk! 💾');</script>", height=0)
@@ -300,6 +300,7 @@ else:
             genai.configure(api_key=st.session_state.api_key)
             model = genai.GenerativeModel('gemini-1.5-flash')
             with st.spinner(f"🤠 Prompt Cowboy is analyzing..."):
+                st.session_state.ai_script = "" # Reset script when new analysis starts
                 tone_guide = {
                     "University Thesis": "Rigorously academic, theoretical, highly structured. Benchmark findings against the academic theories and literature provided in the reference library.",
                     "Venture Capital Pitch": "Punchy, ROI-focused. Highlight scalability, moat, and financial upside.",
@@ -316,7 +317,6 @@ else:
                     scraped = scrape_url(st.session_state.competitor_url)
                     if not scraped.startswith("[Error"): ai_input.append(f"\n\nCompetitor Data:\n{scraped}")
                 if uploaded_file is not None:
-                    # Log the custom session file immediately
                     log_reference(uploaded_file.name, "Uploaded Session Reference")
                     if uploaded_file.name.lower().endswith(('.png', '.jpg', '.jpeg')): ai_input.append(Image.open(uploaded_file))
                     else: ai_input.append(f"\n\nSession Doc:\n{extract_text_from_file(uploaded_file.name)}")
@@ -325,7 +325,6 @@ else:
                 st.session_state.ai_report = final_response.text
                 st.session_state.qa_history = [] 
                 
-                # Log the AI Analysis completion!
                 log_reference(f"AI Report: {raw_topic}", "Generated")
                 
             st.toast("Analysis Complete!", icon="🚀")
@@ -433,6 +432,32 @@ else:
             if st.button("💾 Save to Library", use_container_width=True): save_to_database(st.session_state.task_input, st.session_state.ai_report); st.toast("Saved to sidebar library!", icon="💾")
         st.markdown("## 📄 Your AI-Generated Report")
         st.markdown(st.session_state.ai_report)
+        st.markdown("---")
+        
+        # ==========================================
+        # NEW: PRESENTATION SCRIPT BUILDER
+        # ==========================================
+        st.markdown("## 🎙️ Presentation Script Builder")
+        if st.session_state.ai_script:
+            st.info(st.session_state.ai_script)
+            st.download_button("📥 Download Script (.txt)", data=st.session_state.ai_script, file_name="Presentation_Script.txt", use_container_width=True)
+        else:
+            st.write("Need to present this data? Let AI write your spoken script complete with stage directions for your specific audience.")
+            if st.button("🎙️ Generate Spoken Presentation Script", use_container_width=True):
+                if st.session_state.api_key:
+                    with st.spinner("Drafting presentation script..."):
+                        try:
+                            genai.configure(api_key=st.session_state.api_key)
+                            script_model = genai.GenerativeModel('gemini-1.5-flash')
+                            script_prompt = f"Act as an expert public speaking coach. Write a compelling, natural-sounding spoken presentation script based on the following report. Include bracketed stage directions like [Point to the graph] or [Pause for emphasis] where appropriate. Adapt the tone for a {st.session_state.audience}. Here is the report:\n\n{st.session_state.ai_report}"
+                            st.session_state.ai_script = script_model.generate_content([script_prompt]).text
+                            log_reference(f"Presentation Script: {st.session_state.task_input}", "Generated")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error generating script: {e}")
+                else:
+                    st.error("Please enter your API Key in the sidebar!")
+        
         st.markdown("---")
         st.markdown("## 🎤 Q&A Defense Simulator")
         for chat in st.session_state.qa_history:
