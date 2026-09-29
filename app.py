@@ -181,7 +181,7 @@ if category == "Theories Library":
                 try: st.image(Image.open(file_path), caption=selected_theory, use_container_width=True)
                 except Exception as e: st.error(f"Image error: {e}")
             
-           elif selected_theory.lower().endswith('.pdf'):
+            elif selected_theory.lower().endswith('.pdf'):
                 with open(file_path, "rb") as f:
                     pdf_bytes = f.read()
                 
@@ -189,18 +189,17 @@ if category == "Theories Library":
                 with col1: st.markdown("### 📄 PDF Document")
                 with col2: st.download_button(label="📥 Download File", data=pdf_bytes, file_name=selected_theory, mime='application/pdf', use_container_width=True)
                 
-                # Use <embed> instead of <iframe> to bypass cloud security blocks
                 base64_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
                 pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800" type="application/pdf">'
                 st.markdown(pdf_display, unsafe_allow_html=True)
                 
                 st.markdown("---")
-                st.markdown("#### 📝 Raw Text Preview (What Evori reads)")
+                st.markdown("#### 📝 Raw Text Preview")
                 preview = extract_text_from_file(file_path)
                 if preview: 
                     st.text_area("Extracted Text", preview, height=250)
                 else: 
-                    st.warning("No readable text found. If this is a scanned document, Evori will not be able to read the words inside it.")
+                    st.warning("No readable text found.")
             
             elif selected_theory.lower().endswith(('.xls', '.xlsx')):
                 st.markdown("### 📊 Interactive Excel Viewer")
