@@ -218,12 +218,14 @@ def apply_theme_and_cat(app_theme, current_cat_mode, is_equipped, library_files=
                     
                     if(found.length > 0) {
                         let listHTML = found.slice(0, 5).map(f => {
+                            // 🚀 THE FIX: Pass the FULL path (f) to the URL so app.py can match it, 
+                            // but only show the clean short filename (fileNameOnly) in the chat box!
+                            let safeName = encodeURIComponent(f).replace(/'/g, "%27");
                             let fileNameOnly = f.split('/').pop();
-                            let safeName = encodeURIComponent(fileNameOnly).replace(/'/g, "%27");
                             let dispName = fileNameOnly.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                             
-                            // 🚀 THE FIX: Javascript routing removed! We use pure native HTML routing with target="_self" to safely bypass Streamlit's sandbox.
-                            return `<br>📄 <a href="?doc=${safeName}" target="_self" onclick="window.evoriActions.prepRoute();" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
+                            // 🚀 target="_parent" perfectly forces Streamlit to read the URL and refresh the viewer!
+                            return `<br>📄 <a href="?doc=${safeName}" target="_parent" onclick="window.evoriActions.prepRoute();" style="color:var(--evori-pri); text-decoration:underline; font-weight:bold; cursor:pointer;">${dispName}</a>`;
                         }).join("");
                         
                         let responseText = "Meow! 📚 I sniffed through the library and found:" + listHTML;
