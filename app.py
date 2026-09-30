@@ -171,6 +171,55 @@ elif framework == "Theories Viewer": current_cat_mode = "Examiner"
 apply_theme_and_cat(app_theme, current_cat_mode, cat_equipped, global_valid_files)
 
 # ==========================================
+# SMART RELEVANCE FILTER (Protects API Quota)
+# ==========================================
+def get_relevant_context(query, max_chars=200000):
+    """
+    Reads the library, scores documents based on keyword matches to the user's prompt, 
+    and only returns the most relevant text to strictly prevent 429 Quota Exceeded errors.
+    200,000 chars is ~50,000 tokens (Extremely safe for the 250k limit).
+    """
+    if not global_valid_files: return "", []
+    
+    # Extract important keywords from the prompt (ignore tiny words)
+    query_words = set(w.strip('.,!?()[]"') for w in query.lower().split() if len(w) > 3)
+    scored_docs = []
+    
+    for f in global_valid_files:
+        file_path = os.path.join(KB_DIR, f)
+        if file_path.lower().endswith(('.pdf', '.txt', '.docx', '.csv')):
+            text = extract_text_from_file(file_path)
+            if text:
+                text_lower = text.lower()
+                # 1 point for every matched keyword
+                score = sum(1 for w in query_words if w in text_lower)
+                scored_docs.append((score, f, text))
+                
+    # Sort files from highest relevance score to lowest
+    scored_docs.sort(key=lambda x: x[0], reverse=True)
+    
+    relevant_text = ""
+    used_files = []
+    
+    for score, f, text in scored_docs:
+        # If the file has 0 relevance and we already found good files, skip it
+        if score == 0 and len(used_files) > 0: 
+            continue
+        
+        # Stop adding text if we hit our safe safety limit!
+        if len(relevant_text) + len(text) > max_chars:
+            remaining_space = max_chars - len(relevant_text)
+            if remaining_space > 1000:
+                relevant_text += f"\n\n--- EXCERPT: {f} ---\n" + text[:remaining_space] + "...\n"
+                used_files.append(f)
+            break
+        else:
+            relevant_text += f"\n\n--- DOCUMENT: {f} ---\n" + text
+            used_files.append(f)
+            
+    return relevant_text, used_files
+
+# ==========================================
 # VIEWER
 # ==========================================
 if category == "Theories Library":
@@ -181,7 +230,6 @@ if category == "Theories Library":
     if global_valid_files:
         sorted_files = sorted(global_valid_files, key=str.casefold)
         
-        # Catch the exact link Evori clicked
         target_doc = st.query_params.get("doc", None)
         
         doc_idx = 0
@@ -278,13 +326,13 @@ else:
     with col_btn1:
         if st.button("Submit Prompt", use_container_width=True):
             st.session_state.task_input = temp_task; st.session_state.audience = temp_audience; st.session_state.competitor_url = temp_url; st.session_state.qa_history = [] 
-            st.session_state.ai_script = "" # Clear old script
+            st.session_state.ai_script = "" 
             st.toast("Prompt locked!", icon="🎯")
             if st.session_state.cat_equipped: components.html("<script>if(window.parent.evoriActions) window.parent.evoriActions.speak('Action', 'Prompt saved! 👍');</script>", height=0)
     with col_btn2:
         if st.button("Submit & Save Project", use_container_width=True):
             st.session_state.task_input = temp_task; st.session_state.audience = temp_audience; st.session_state.competitor_url = temp_url; st.session_state.qa_history = []
-            st.session_state.ai_script = "" # Clear old script
+            st.session_state.ai_script = "" 
             save_to_database(temp_task, st.session_state.ai_report)
             st.toast("Prompt saved to Library!", icon="💾")
             if st.session_state.cat_equipped: components.html("<script>if(window.parent.evoriActions) window.parent.evoriActions.speak('Action', 'Saved to disk! 💾');</script>", height=0)
@@ -300,18 +348,29 @@ else:
         try:
             genai.configure(api_key=st.session_state.api_key)
             model = genai.GenerativeModel('gemini-3.8-flash')
-            with st.spinner(f"🤠 Prompt Cowboy is analyzing..."):
-                st.session_state.ai_script = "" # Reset script when new analysis starts
+            with st.spinner(f"🤠 Prompt Cowboy is analyzing... (Smart Filtering Library)"):
+                st.session_state.ai_script = ""
                 tone_guide = {
                     "University Thesis": "Rigorously academic, theoretical, highly structured. Benchmark findings against the academic theories and literature provided in the reference library.",
                     "Venture Capital Pitch": "Punchy, ROI-focused. Highlight scalability, moat, and financial upside.",
                     "Internal Board Memo": "Concise, operational, risk-focused executive summary."
                 }
+                
                 ai_input = [f"You are 'Prompt Cowboy'. Write a {analysis_context} for: '{raw_topic}'. TONE: {st.session_state.audience}. STYLE: {tone_guide.get(st.session_state.audience, '')} BENCHMARK using library."]
-                if kb_text_content: ai_input.append(f"\n\n[ACADEMIC BENCHMARKING LIBRARY (TEXT)]:\n{kb_text_content}")
+                
+                # ===============================================
+                # NEW: Apply Smart Filter instead of dumping all text
+                # ===============================================
+                query_for_filter = raw_topic + " " + analysis_context
+                relevant_text, matched_files = get_relevant_context(query_for_filter)
+                
+                if relevant_text:
+                    ai_input.append(f"\n\n[FILTERED ACADEMIC BENCHMARKING LIBRARY (Top matches: {', '.join(matched_files)})]:\n{relevant_text}")
+                    st.toast(f"Saved quota! Filtered down to {len(matched_files)} highly relevant files.", icon="🧠")
+                
                 if kb_image_list:
                     ai_input.append("\n\n[VISUAL FRAMEWORKS]:")
-                    for img in kb_image_list:
+                    for img in kb_image_list[:5]:  # Limit to 5 images to prevent token overload
                         try: ai_input.append(Image.open(img))
                         except Exception: pass
                 if st.session_state.competitor_url:
